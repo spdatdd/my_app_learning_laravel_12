@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 declare(strict_types=1);
 
 namespace App\Orders;
@@ -38,7 +39,7 @@ final class OrderLine
         return $this->quantity;
     }
 
-    public function subtotal():int 
+    public function subtotal(): int
     {
         return $this->unitPrice * $this->quantity;
     }

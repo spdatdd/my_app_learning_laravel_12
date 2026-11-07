@@ -1,22 +1,22 @@
-<?Php
+<?php
 
-declare(strict_types= 1);
+declare(strict_types=1);
 
 namespace App\Orders;
 
 use InvalidArgumentException;
 
-final class OrderCalculator 
+final class OrderCalculator
 {
     /**
-     * @param list<OrderLine> $lines
+     * @param  list<OrderLine>  $lines
      */
-    public function total(array $lines): int 
+    public function total(array $lines): int
     {
         $total = 0;
 
         foreach ($lines as $line) {
-            if (!$line instanceof OrderLine) {
+            if (! $line instanceof OrderLine) {
                 throw new InvalidArgumentException(
                     'Danh sách chứa dòng không hợp lệ.'
                 );

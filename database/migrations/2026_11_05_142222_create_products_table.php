@@ -9,22 +9,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('products', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('customer_id')
-                ->constrained()
-                ->restrictOnDelete();
-
-            $table->enum('status', [
-                'pending',
-                'confirmed',
-                'cancelled'
-            ])->default('pending');
-
+            $table->string('sku', 64)->unique();
+            $table->string('name');
+            $table->unsignedBigInteger('price_vnd');
+            $table->unsignedInteger('stock')->default(0);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
@@ -34,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('products');
     }
 };
