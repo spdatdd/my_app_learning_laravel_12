@@ -34,6 +34,11 @@
 - `php artisan migrate`: Chạy các migration chưa được áp dụng để cập nhật cấu trúc cơ sở dữ liệu.
 - `php artisan db:seed --class=CustomerSeeder`: Chạy riêng seeder `CustomerSeeder` để thêm dữ liệu khách hàng mẫu vào cơ sở dữ liệu.
 
+### Kiểm thử
+
+- `php artisan make:test --phpunit FirstApiFeatureTest --no-interaction`: Tạo class test PHPUnit tại `tests/Feature/FirstApiFeatureTest.php`; `--phpunit` chọn PHPUnit, `FirstApiFeatureTest` là tên class, `--no-interaction` không hỏi tương tác. Mặc định tạo feature test; thêm `--unit` nếu muốn tạo unit test trong `tests/Unit`. Lệnh chỉ tạo file test, không chạy test.
+- `php artisan test --compact tests/Feature/FirstApiFeatureTest.php`: Chạy các test trong riêng file `tests/Feature/FirstApiFeatureTest.php`; `--compact` hiển thị kết quả rút gọn. Dùng sau khi tạo hoặc sửa test để kiểm tra test xanh hay đỏ; file test phải tồn tại trước khi chạy.
+
 ### Form Request
 
 - `php artisan make:request TenRequest --no-interaction`: Tạo class Form Request trong `app/Http/Requests` để tách validation và kiểm tra quyền khỏi controller; `TenRequest` là tên class cần tạo, `--no-interaction` không hỏi tương tác khi chạy lệnh.
@@ -63,79 +68,3 @@ php artisan make:model OrderItem -m
   - `php artisan make:model`: Lệnh Artisan tạo một Eloquent model.
   - `Customer`, `Product`, `Order`, `OrderItem`: Tên các model được tạo, thường đại diện cho các thực thể trong ứng dụng.
   - `-m` (`--migration`): Tạo thêm một file migration để định nghĩa cấu trúc bảng cơ sở dữ liệu tương ứng. Migration cần được chạy bằng `php artisan migrate` để áp dụng vào cơ sở dữ liệu.
-
-- Dùng `DB::transaction()` để xóa dữ liệu trong các bảng theo thứ tự, trong một transaction:
-```php
-use Illuminate\Support\Facades\DB;
-
-DB::transaction(function () {
-    DB::table('order_items')->delete();
-    DB::table('orders')->delete();
-    DB::table('products')->delete();
-    DB::table('customers')->delete();
-});
-```
-
-- Tắt tạm kiểm tra khóa ngoại để `truncate()` các bảng, rồi bật lại trong `finally` để bảo đảm được bật lại kể cả khi có lỗi, Xóa dữ liệu và đặt lại ID về 1.
-    ```php
-    use Illuminate\Support\Facades\DB;
-
-    DB::statement('SET FOREIGN_KEY_CHECKS=0');
-
-    try {
-        DB::table('order_items')->truncate();
-        DB::table('orders')->truncate();
-        DB::table('products')->truncate();
-        DB::table('customers')->truncate();
-        DB::table('users')->truncate();
-    } finally {
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-    }
-    ```
-
-- Tạo dữ liệu mẫu và token kiểm thử trong Tinker:
-    ```php
-    use App\Models\Customer;
-    use App\Models\Product;
-    use App\Models\Order;
-    use App\Models\OrderItem;
-    use App\Models\User;
-
-    // Khách hàng
-    $customer = Customer::create([
-        'name' => 'Nguyen Van A',
-        'email' => 'customer@example.com',
-        'phone' => '0901234567',
-    ]);
-
-    // Sản phẩm
-    $product = Product::create([
-        'name' => 'Laptop Dell',
-        'price' => 15000000,
-        'stock' => 8,
-    ]);
-
-    // Đơn hàng
-    $order = Order::create([
-        'customer_id' => $customer->id,
-        'status' => 'pending',
-    ]);
-
-    // Chi tiết đơn hàng
-    OrderItem::create([
-        'order_id' => $order->id,
-        'product_id' => $product->id,
-        'quantity' => 2,
-    ]);
-
-    // Tài khoản kiểm thử
-    $user = User::create([
-        'name' => 'API Tester',
-        'email' => 'tester@example.com',
-        'password' => bcrypt('TestPassword123!'),
-    ]);
-
-    $token = $user->createToken('postman-test')->plainTextToken;
-
-    echo $token;
-    ```
