@@ -28,10 +28,28 @@
 
 ## Laravel
 
+- `vendor/bin/pint --dirty --format agent`: Chạy Laravel Pint để tự sửa định dạng mã PHP trước khi hoàn tất thay đổi; `--dirty` chỉ xử lý các file có thay đổi chưa commit trong Git, còn `--format agent` xuất kết quả dạng JSON gọn cho công cụ AI. Lệnh chỉnh sửa file trực tiếp; không kiểm thử logic ứng dụng.
 - `php artisan tinker`: Mở REPL để chạy và thử các câu lệnh PHP trong ứng dụng Laravel.
 - `php artisan config:clear`: Xóa cache cấu hình để Laravel đọc lại cấu hình hiện tại.
 - `php artisan migrate`: Chạy các migration chưa được áp dụng để cập nhật cấu trúc cơ sở dữ liệu.
 - `php artisan db:seed --class=CustomerSeeder`: Chạy riêng seeder `CustomerSeeder` để thêm dữ liệu khách hàng mẫu vào cơ sở dữ liệu.
+
+### Form Request
+
+- `php artisan make:request TenRequest --no-interaction`: Tạo class Form Request trong `app/Http/Requests` để tách validation và kiểm tra quyền khỏi controller; `TenRequest` là tên class cần tạo, `--no-interaction` không hỏi tương tác khi chạy lệnh.
+
+```sh
+php artisan make:request StoreCustomerRequest --no-interaction
+php artisan make:request UpdateCustomerRequest --no-interaction
+```
+
+- `authorize(): bool`: Quyết định request có được phép thực hiện hay không. Class mới tạo mặc định trả `false`, khiến request nhận lỗi 403; trong giai đoạn chưa học phân quyền, tạm đổi thành `return true;`.
+- `rules(): array`: Khai báo quy tắc validation. Khai báo kiểu tham số như `StoreCustomerRequest $request` trong action để Laravel tự kiểm tra trước khi chạy action; không cần lặp validation trong controller.
+- `$request->validated()`: Lấy mảng dữ liệu đã qua validation. Với các trường đơn của khách, chỉ khai báo `name`, `email`, `phone` trong rules để `created_by` và `role` do client gửi không lọt vào mảng xử lý. Không dùng `$request->all()` để ghi dữ liệu; trường hệ thống phải do server gán.
+- `sometimes`: Chỉ validate trường khi trường đó có trong payload, phù hợp cập nhật từng phần bằng PATCH. Ví dụ `'name' => ['sometimes', 'required', 'string', 'max:150']`: không gửi thì bỏ qua, nhưng gửi tên rỗng hoặc `null` thì báo lỗi. Với email có thể xóa giá trị, dùng `'email' => ['sometimes', 'nullable', 'email', 'max:255']`.
+- PATCH phải chỉ áp dụng các key có trong dữ liệu đã validate: không gửi trường thì giữ nguyên giá trị cũ; gửi `email: null` thì chủ động xóa email. Form Request chỉ kiểm tra đầu vào, không tự lưu hay cập nhật database.
+
+### Model và dữ liệu
 
 - Tạo model cùng file migration tương ứng:
 
