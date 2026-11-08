@@ -16,6 +16,9 @@ Route::prefix('v1')->group(function (): void {
     Route::patch('/customers/{customer}', [CustomerController::class, 'update'])
         ->whereNumber('customer')
         ->name('api.v1.customers.update');
+    Route::get('/debug-error', function (): never {
+        throw new RuntimeException('Local error handling exercise.');
+    })->name('api.v1.debug-error');
 });
 
 Route::get('/user', function (Request $request) {

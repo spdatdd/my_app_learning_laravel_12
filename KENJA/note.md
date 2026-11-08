@@ -36,6 +36,8 @@
 
 ### Kiểm thử
 
+- `curl.exe -i http://127.0.0.1:8000/api/v1/debug-error`: Gửi request GET đến API local; `-i` hiển thị cả status, response headers và body để kiểm tra lỗi. Server phải đang chạy và route thử phải tồn tại, chủ động ném exception; khi `APP_DEBUG=false`, mong đợi status `500`, JSON `{"message":"Server Error"}` và header `X-Request-ID` để đối chiếu log. Nếu nhận `404`, kiểm tra URL và khai báo route; trong nhóm `prefix('v1')`, chỉ khai báo `/debug-error` để tránh lặp `v1`. Xóa route thử lỗi sau khi thực hành.
+- `Select-String -Path storage/logs/laravel.log -SimpleMatch "UUID-vua-copy"`: Chạy trong PowerShell tại thư mục gốc dự án để tìm các dòng log chứa request ID. Thay `UUID-vua-copy` bằng giá trị header `X-Request-ID` của lần gọi API cần kiểm tra; `-Path` chỉ định file log, `-SimpleMatch` tìm chuỗi nguyên văn thay vì biểu thức chính quy. Lệnh chỉ đọc file; nếu không có kết quả, kiểm tra UUID, việc ghi log và file log đang dùng.
 - `php artisan make:test --phpunit FirstApiFeatureTest --no-interaction`: Tạo class test PHPUnit tại `tests/Feature/FirstApiFeatureTest.php`; `--phpunit` chọn PHPUnit, `FirstApiFeatureTest` là tên class, `--no-interaction` không hỏi tương tác. Mặc định tạo feature test; thêm `--unit` nếu muốn tạo unit test trong `tests/Unit`. Lệnh chỉ tạo file test, không chạy test.
 - `php artisan test --compact tests/Feature/FirstApiFeatureTest.php`: Chạy các test trong riêng file `tests/Feature/FirstApiFeatureTest.php`; `--compact` hiển thị kết quả rút gọn. Dùng sau khi tạo hoặc sửa test để kiểm tra test xanh hay đỏ; file test phải tồn tại trước khi chạy.
 
