@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class SalesSchemaTest extends TestCase
@@ -37,7 +38,7 @@ class SalesSchemaTest extends TestCase
         $this->assertSame($product->sku, $item->sku_snapshot);
         $this->assertSame($product->name, $item->name_snapshot);
         $this->assertSame(50000, $item->line_total_vnd);
-        $this->assertSame($item->id, $order->items->sole()->id);
+        $this->assertSame($item->id, $order->items()->sole()->id);
         $this->assertNotNull($order->fresh()->confirmed_at);
         $this->assertNull($order->cancelled_at);
         $this->assertSame(-2, $movement->fresh()->delta);
@@ -87,5 +88,50 @@ class SalesSchemaTest extends TestCase
     {
         $this->expectException(QueryException::class);
         Customer::factory()->create(['created_by' => 999999]);
+    }
+
+    public function test_order_items_require_an_existing_order(): void
+    {
+        $this->expectException(QueryException::class);
+
+        OrderItem::factory()->create(['order_id' => 999999]);
+    }
+
+    public function test_order_items_require_an_existing_product(): void
+    {
+        $this->expectException(QueryException::class);
+
+        OrderItem::factory()->create([
+            'product_id' => 999999,
+            'sku_snapshot' => 'MISSING-PRODUCT',
+            'name_snapshot' => 'Missing product',
+            'unit_price_vnd' => 25000,
+            'quantity' => 2,
+            'line_total_vnd' => 50000,
+        ]);
+    }
+
+    public function test_products_referenced_by_order_items_cannot_be_deleted(): void
+    {
+        $item = OrderItem::factory()->create();
+
+        $this->expectException(QueryException::class);
+
+        $item->product()->firstOrFail()->delete();
+    }
+
+    public function test_customers_referenced_by_orders_cannot_be_deleted(): void
+    {
+        $order = Order::factory()->create();
+
+        $this->expectException(QueryException::class);
+
+        $order->customer()->firstOrFail()->delete();
+    }
+
+    public function test_orders_have_expected_query_indexes(): void
+    {
+        $this->assertTrue(Schema::hasIndex('orders', ['created_by', 'status']));
+        $this->assertTrue(Schema::hasIndex('orders', ['confirmed_at']));
     }
 }

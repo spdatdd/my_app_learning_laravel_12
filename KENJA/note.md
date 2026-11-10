@@ -32,6 +32,7 @@
 - `php artisan tinker`: Mở REPL để chạy và thử các câu lệnh PHP trong ứng dụng Laravel.
 - `php artisan config:clear`: Xóa cache cấu hình để Laravel đọc lại cấu hình hiện tại.
 - `php artisan migrate`: Chạy các migration chưa được áp dụng để cập nhật cấu trúc cơ sở dữ liệu.
+- `php artisan migrate:status`: Xem trạng thái các migration trên kết nối cơ sở dữ liệu hiện tại; `Ran` là đã chạy, `Pending` là chưa chạy, `Batch` là số đợt chạy migration, được dùng khi rollback theo đợt. Dùng để kiểm tra trước hoặc sau khi chạy `php artisan migrate`; lệnh chỉ kiểm tra trạng thái, không áp dụng hay hoàn tác migration.
 - `php artisan db:seed --class=CustomerSeeder`: Chạy riêng seeder `CustomerSeeder` để thêm dữ liệu khách hàng mẫu vào cơ sở dữ liệu.
 
 ### Kiểm thử
