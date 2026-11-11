@@ -14,7 +14,6 @@ class Product extends Model
         'sku',
         'name',
         'price_vnd',
-        'stock',
         'is_active',
     ];
 
