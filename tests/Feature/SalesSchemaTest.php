@@ -11,6 +11,7 @@ use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -45,8 +46,31 @@ class SalesSchemaTest extends TestCase
         $this->assertNotNull($movement->fresh()->created_at);
         $this->assertArrayNotHasKey('updated_at', $movement->getAttributes());
         $this->assertTrue($request->order->is($order));
+    }
+
+    public function test_order_item_keeps_original_snapshot_after_product_changes(): void
+    {
+        $product = Product::factory()->create([
+            'name' => 'Original name',
+            'price_vnd' => 25000,
+        ]);
+        $order = Order::factory()->create(['total_vnd' => 50000]);
+        OrderItem::factory()->for($order)->for($product)->create(['quantity' => 2]);
+
         $product->update(['name' => 'Changed name', 'price_vnd' => 30000]);
-        $this->assertSame(25000, $item->fresh()->unit_price_vnd);
+
+        $reloadedOrder = Order::query()
+            ->with('items.product')
+            ->whereKey($order->getKey())
+            ->firstOrFail();
+        $reloadedItem = $reloadedOrder->items->sole();
+
+        $this->assertSame('Changed name', $reloadedItem->product->name);
+        $this->assertSame(30000, $reloadedItem->product->price_vnd);
+
+        $this->assertSame('Original name', $reloadedItem->name_snapshot);
+        $this->assertSame(25000, $reloadedItem->unit_price_vnd);
+        $this->assertSame(50000, $reloadedItem->line_total_vnd);
     }
 
     public function test_customers_allow_duplicate_and_null_emails(): void
@@ -133,5 +157,38 @@ class SalesSchemaTest extends TestCase
     {
         $this->assertTrue(Schema::hasIndex('orders', ['created_by', 'status']));
         $this->assertTrue(Schema::hasIndex('orders', ['confirmed_at']));
+    }
+
+    public function test_eager_loading_products_for_ten_orders_uses_three_queries(): void
+    {
+        $product = Product::factory()->create();
+
+        $orders = Order::factory()->count(10)->create();
+
+        foreach ($orders as $order) {
+            OrderItem::factory()->for($order)->for($product)->create();
+        }
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        try {
+            $loadedOrders = Order::with('items.product')->get();
+
+            $this->assertCount(10, $loadedOrders);
+
+            foreach ($loadedOrders as $order) {
+                $this->assertCount(1, $order->items);
+
+                foreach ($order->items as $item) {
+                    $this->assertSame($product->id, $item->product->id);
+                }
+            }
+
+            $this->assertCount(3, DB::getQueryLog());
+        } finally {
+            DB::disableQueryLog();
+            DB::flushQueryLog();
+        }
     }
 }
